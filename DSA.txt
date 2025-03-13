@@ -1,0 +1,113 @@
+import random
+
+class BusRoute:
+    def __init__(self, destination, price, travel_time):
+        self.destination = destination
+        self.price = price
+        self.travel_time = travel_time
+        self.next = None  
+
+class City:
+    def __init__(self, name):
+        self.name = name
+        self.routes = None  
+    def add_route(self, destination, price, travel_time):
+        new_route = BusRoute(destination, price, travel_time)
+        if not self.routes:
+            self.routes = new_route
+        else:
+            temp = self.routes
+            while temp.next:
+                temp = temp.next
+            temp.next = new_route
+
+class BusRouteOptimizer:
+    cities = {
+        "Coimbatore"
+        : City("Coimbatore"),
+        "Palakkad": City("Palakkad"),
+        "Madurai": City("Madurai"),
+        "Chennai": City("Chennai"),
+        "Bangalore": City("Bangalore"),
+        "Hyderabad": City("Hyderabad"),
+        "Pune": City("Pune"),
+        "Mumbai": City("Mumbai"),
+        "Kochi": City("Kochi")
+    }
+
+    
+    def initialize_routes():
+        route_data = [
+            ("Coimbatore", "Palakkad", 200, 60),
+            ("Coimbatore", "Madurai", 400, 240),
+            ("Coimbatore", "Kochi", 350, 150),
+            ("Coimbatore", "Chennai", 550, 360),
+            ("Palakkad", "Kochi", 350, 150),
+            ("Madurai", "Chennai", 550, 360),
+            ("Chennai", "Bangalore", 650, 330),
+            ("Bangalore", "Hyderabad", 750, 450),
+            ("Hyderabad", "Pune", 850, 450),
+            ("Pune", "Mumbai", 350, 150)
+        ]
+        
+        for start, destination, price, time in route_data:
+            BusRouteOptimizer.cities[start].add_route(destination, price, time)
+
+    
+    def apply_traffic_conditions(route):
+        traffic_multiplier = random.uniform(1.0, 1.5)  
+        adjusted_time = int(route.travel_time * traffic_multiplier)
+        adjusted_price = route.price if traffic_multiplier <= 1.2 else int(route.price * 1.2) 
+        return BusRoute(route.destination, adjusted_price, adjusted_time)
+
+
+    def find_best_route(start, destination):
+        if start not in BusRouteOptimizer.cities or destination not in BusRouteOptimizer.cities:
+            print(" Invalid city selection. Please restart and enter a valid city.")
+            return
+
+        visited = set()
+        routes_to_explore = [(start, [], 0, 0)]  
+        best_path = None
+        best_time = float('inf')
+        best_price = float('inf')
+
+        while routes_to_explore:
+            current_city, path, total_price, total_time = routes_to_explore.pop(0)
+
+            if current_city in visited:
+                continue
+            visited.add(current_city)
+
+            route_node = BusRouteOptimizer.cities[current_city].routes
+            while route_node:
+                adjusted_route = BusRouteOptimizer.apply_traffic_conditions(route_node)
+                new_path = path + [(current_city, adjusted_route.destination)]
+                new_price = total_price + adjusted_route.price
+                new_time = total_time + adjusted_route.travel_time
+
+                if adjusted_route.destination == destination:
+                    if new_time < best_time:
+                        best_time = new_time
+                        best_price = new_price
+                        best_path = new_path
+                else:
+                    routes_to_explore.append((adjusted_route.destination, new_path, new_price, new_time))
+                
+                route_node = route_node.next
+
+        if best_path:
+            print("\n Best Route Found:")
+            for src, dest in best_path:
+                print(f"   {src} → {dest}")
+            print(f"    Estimated Travel Time: {best_time // 60} hrs {best_time % 60} min")
+            print(f"   Total Ticket Price: ₹{best_price}")
+        else:
+            print(f"\n No route found from {start} to {destination}.")
+
+if __name__ == "__main__":
+    BusRouteOptimizer.initialize_routes()
+    print("\n Available Cities:", list(BusRouteOptimizer.cities.keys()))
+    start = input("Enter your starting city: ").strip()
+    destination = input("Enter your destination city: ").strip()
+    BusRouteOptimizer.find_best_route(start, destination)
