@@ -1,0 +1,94 @@
+import java.util.*;
+
+class BusRoute {
+    String destination, comfortLevel;
+    int price, travelTime;
+
+    public BusRoute(String destination, String comfortLevel, int price, int travelTime) {
+        this.destination = destination;
+        this.comfortLevel = comfortLevel;
+        this.price = price;
+        this.travelTime = travelTime;
+    }
+}
+
+public class BusRouteOptimizer {
+    private static final Map<String, List<BusRoute>> graph = new HashMap<>();
+
+    static {
+        graph.put("Coimbatore", Arrays.asList(
+                new BusRoute("Palakkad", "High Comfort", 200, 60),
+                new BusRoute("Palakkad", "Low Comfort", 150, 75)));
+        graph.put("Palakkad", Arrays.asList(
+                new BusRoute("Kochi", "High Comfort", 350, 150),
+                new BusRoute("Kochi", "Low Comfort", 250, 180)));
+        graph.put("Madurai", Arrays.asList(
+                new BusRoute("Chennai", "High Comfort", 550, 360),
+                new BusRoute("Chennai", "Low Comfort", 450, 400),
+                new BusRoute("Coimbatore", "High Comfort", 400, 240),
+                new BusRoute("Coimbatore", "Low Comfort", 350, 260)));
+        graph.put("Chennai", Arrays.asList(
+                new BusRoute("Bangalore", "High Comfort", 650, 330),
+                new BusRoute("Bangalore", "Low Comfort", 550, 360)));
+        graph.put("Bangalore", Arrays.asList(
+                new BusRoute("Hyderabad", "High Comfort", 750, 450),
+                new BusRoute("Hyderabad", "Low Comfort", 650, 500)));
+        graph.put("Hyderabad", Arrays.asList(
+                new BusRoute("Pune", "High Comfort", 850, 450),
+                new BusRoute("Pune", "Low Comfort", 750, 480)));
+        graph.put("Pune", Arrays.asList(
+                new BusRoute("Mumbai", "High Comfort", 350, 150),
+                new BusRoute("Mumbai", "Low Comfort", 300, 180)));
+    }
+
+    private static List<BusRoute> applyTrafficConditions(List<BusRoute> routes) {
+        double trafficMultiplier = 1.15; 
+        List<BusRoute> updatedRoutes = new ArrayList<>();
+        for (BusRoute route : routes) {
+            int adjustedTime = (int) (route.travelTime * trafficMultiplier);
+            updatedRoutes.add(new BusRoute(route.destination, route.comfortLevel, route.price, adjustedTime));
+        }
+        return updatedRoutes;
+    }
+
+    private static void findBestRoute(String start, String destination) {
+        Queue<String> queue = new LinkedList<>();
+        Set<String> visited = new HashSet<>();
+        queue.add(start);
+        visited.add(start);
+
+        while (!queue.isEmpty()) {
+            String currentCity = queue.poll();
+            List<BusRoute> routes = applyTrafficConditions(graph.getOrDefault(currentCity, new ArrayList<>()));
+            
+            for (BusRoute route : routes) {
+                if (visited.contains(route.destination)) continue;
+                visited.add(route.destination);
+                queue.add(route.destination);
+                
+                System.out.println("\n Route Found: " + start + " → " + route.destination);
+                System.out.println("   Comfort Level: " + route.comfortLevel);
+                System.out.println("    Travel Time: " + (route.travelTime / 60) + " hrs " + (route.travelTime % 60) + " min");
+                System.out.println("    Price: ₹" + route.price);
+                
+                if (route.destination.equals(destination)) return;
+            }
+        }
+        System.out.println("\n No direct route found from " + start + " to " + destination + ". Try alternative routes.");
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("\n Available Cities: " + graph.keySet());
+        System.out.print("Enter your starting city: ");
+        String start = scanner.nextLine().trim();
+        System.out.print("Enter your destination city: ");
+        String destination = scanner.nextLine().trim();
+
+        if (!graph.containsKey(start) || !graph.containsKey(destination)) {
+            System.out.println(" Invalid city selection. Please restart and enter a valid city.");
+            return;
+        }
+        findBestRoute(start, destination);
+    }
+}
